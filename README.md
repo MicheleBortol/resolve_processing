@@ -24,9 +24,10 @@ The definition file is provided [here](https://github.com/MicheleBortol/RESOLVE_
 	+ (1.2) [Input](###Input)
 	+ (1.3) [Output](###Output)
 	+ (1.4) [Example Run](###Example)
-+ (2.2) [Scripts](##Scripts)
-	+ (2.1) [Segmentation](###Segmentation)
-	+ (2.2) [Expression assignment](###expression_assign)
++ (2) [Scripts](##Scripts)
+	+ (2.1) [Gap Filling](###MindaGap)
+	+ (2.2) [Segmentation](###Segmentation)
+	+ (2.3) [Expression assignment](###expression_assign)
 
 ## 1) Nextflow pipeline <a name="##Pipeline"></a>
 
@@ -68,7 +69,25 @@ Breakdown:
 ## 2) Scripts <a name="#Scripts"></a>
 Scripts used in the Nextflow pipeline, can also be run independently.
 
-### 2.1) Segmentation <a name="##Segmentation"></a>
+### 2.1) Gap FIlling <a name="##MindaGap"></a>
+
+```
+python3.9 -u /MindaGap/mindagap.py $dapi_path 3 > gapfilling_log.txt
+mv *gridfilled.tif $sample_name-gridfilled.tiff                
+```
+
+It requires the following arguments:
++ `$dapi_path` = path to the image to fix
++ `$sample_name` = Sample name	
+
+The script:
+1) Run MindaGap on the input image with a smoothing box size of 3.
+2) Renames the output image.
+
+For more info on MindaGap see:
+https://github.com/ViriatoII/MindaGap
+
+### 2.2) Segmentation <a name="##Segmentation"></a>
 [Segmentation script](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/bin/segmenter.py)
 Just a wrapper around cellpose. It assumes the input is a single channel grayscale image with the nuclei. It requires the following positional arguments:
 + `tiff_path` = path to the image to segment
@@ -88,7 +107,7 @@ The script:
 **Example**  
 `python3.9 segmenter.py DAPI_IMAGE cyto 0 70 OUTPUT_SEGMENTATION_MASK_NAME OUTPUT_ROI_ZIP_NAME`
 
-### 2.2) Expression assignment <a name="##expression_assign"></a>
+### 2.3) Expression assignment <a name="##expression_assign"></a>
 [Expression assignment script](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/bin/segmenter.py)
 Counts the transcripts in each cell from the segmentation mask. Equivalent to the Polylux counts unless:
 + Overlapping ROIs
