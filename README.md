@@ -53,9 +53,10 @@ Folder with the panoramas to be processed. All panoramas are expected to have:
 In `params.output_path`: 
 + `sample_metadata.csv`: .csv file with one row per sample and 3 columns: sample (sample name), dapi (path to the dapi image), counts (path to the transcript coordinates)
 + For each sample a folder: `SAMPLE_NAME` with: 
-+ `SAMPLE_NAME-mask.tiff` = 16 bit segmentation mask (0 = background, N = pixels belonging to the Nth cell).
-+ `SAMPLE_NAME-roi.zip` (optional) = ImageJ ROI file with the ROIs numbered according to the segmentation mask.
-+ `SAMPLE_NAME-cell_data.csv` = Single cell data, numbered according to the semgentation mask.
+	+ `SAMPLE_NAME-gridfilled.tiff` = Image with the registration grid lines smoothed out. 
+	+ `SAMPLE_NAME-mask.tiff` = 16 bit segmentation mask (0 = background, N = pixels belonging to the Nth cell).
+	+ `SAMPLE_NAME-roi.zip` (optional) = ImageJ ROI file with the ROIs numbered according to the segmentation mask.
+	+ `SAMPLE_NAME-cell_data.csv` = Single cell data, numbered according to the semgentation mask.
 
 ### 1.4) Example <a name="##Example"></a>
 `nextflow run main.nf -profile cluster -c test.config`
@@ -70,11 +71,19 @@ Scripts used in the Nextflow pipeline, can also be run independently.
 ### 2.1) Segmentation <a name="##Segmentation"></a>
 [Segmentation script](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/bin/segmenter.py)
 Just a wrapper around cellpose. It assumes the input is a single channel grayscale image with the nuclei. It requires the following positional arguments:
-+ tiff_path = path to the image to segment
-+ model_name = model to use for the segmentation			
-+ prob_thresh = probability threshold
-+ output_mask_file = path to the cell mask output
-+ output_roi_file (optional) = path to the roi mask output or leave empty to skip (saves time).
++ `tiff_path` = path to the image to segment
++ `model_name` = model to use for the segmentation			
++ `prob_thresh` = probability threshold
++ `cell_diameter` = cell diameter for cellpose and size filtering (None for automatic selection). Cells smaller than `cell_diameter / 2` are discarded
++ `output_mask_file` = path to the cell mask output
++ `output_roi_file` (optional) = path to the roi mask output or leave empty to skip (saves time).
+
+The script:
+1) Run CLAHE on the input image.
+2) Segemnt with cellpose.
+3) Remove cells smaller then `cell_diameter / 2`.
+4) OPTIONAL: extract the ROIs and write them in ImageJ format as a zip file.
+
 
 **Example**  
 `python3.9 segmenter.py DAPI_IMAGE cyto 0 70 OUTPUT_SEGMENTATION_MASK_NAME OUTPUT_ROI_ZIP_NAME`
