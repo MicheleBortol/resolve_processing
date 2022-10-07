@@ -111,7 +111,8 @@ The script:
 [Expression assignment script](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/bin/segmenter.py)
 Counts the transcripts in each cell from the segmentation mask. Equivalent to the Polylux counts unless:
 + Overlapping ROIs
-+ Transcripts outside the border of the image or lying exactly on the ROI border (resolution is 1 pixel)
++ Transcripts outside the border of the image or lying exactly on the ROI border (resolution is 1 pixel)  
+
 It requires the following positional arguments:
 + mask_file = Path to the input mask file
 + transcript_file = Path to the input transcript file
