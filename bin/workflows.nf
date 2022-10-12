@@ -3,6 +3,7 @@ nextflow.enable.dsl=2
 script_folder = "$baseDir/bin"
 
 include {collect_data} from "$script_folder/processes.nf"
+include {fill_image_gaps} from "$script_folder/processes.nf"
 include {cellpose_segment} from "$script_folder/processes.nf"
 include {extract_sc_data} from "$script_folder/processes.nf"
 
@@ -29,6 +30,16 @@ workflow segmentation{
     emit:
         mask_images = cellpose_segment.out.mask_image
 		roi_zips = cellpose_segment.out.roi_zip
+}
+
+workflow gap_filling{
+    take:
+		sample_name
+		dapi_path
+    main:
+        fill_image_gaps(sample_name, dapi_path)
+    emit:
+        gap_filled_image = fill_image_gaps.out.filled_image
 }
 
 workflow sc_data_extraction{

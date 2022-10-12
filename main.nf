@@ -3,6 +3,7 @@ nextflow.enable.dsl=2
 script_folder = "$baseDir/bin"
 
 include {data_collection} from "$script_folder/workflows.nf"
+include {gap_filling} from "$script_folder/workflows.nf"
 include {segmentation} from "$script_folder/workflows.nf"
 include {sc_data_extraction} from "$script_folder/workflows.nf"
 
@@ -21,9 +22,14 @@ workflow {
 	dapi=sample_metadata.dapi.toSortedList().flatten().view()
 	counts=sample_metadata.counts.toSortedList().flatten().view()
 
+	gap_filling(samples, dapi)
+
+	filled=gap_filling.out.gap_filled_image
+		.toSortedList(compare_file_names).flatten().view()
+
 	segmentation(sample_metadata.sample, params.model_name, \
 		params.probability_threshold, params.cell_diameter, \
-		params.do_zip, sample_metadata.dapi)
+		params.do_zip, filled)
 
 	
 	cell_masks = segmentation.out.mask_images

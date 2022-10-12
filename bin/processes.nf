@@ -1,4 +1,5 @@
 script_folder = "$baseDir/bin"
+
 process collect_data{
 
     memory { 1.GB }
@@ -25,6 +26,32 @@ process collect_data{
     """
 }
 
+process fill_image_gaps{
+
+    memory { 8.GB * task.attempt }
+    time '1h'
+
+    errorStrategy { task.exitStatus in 137..143 ? 'retry' : 'terminate' }
+    maxRetries 3
+
+    publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
+    container = "library://michelebortol/resolve_tools/cellpose_skimage:resolve_tools"
+
+    input:
+		val(sample_name)
+		path(dapi_path)
+	
+    output:
+        path("$sample_name-gridfilled.tiff", emit: filled_image)
+
+    script:
+    """
+	python3.9 -u /MindaGap/mindagap.py $dapi_path 3 > gapfilling_log.txt
+	mv *gridfilled.tif $sample_name-gridfilled.tiff
+
+    """
+}
+
 process cellpose_segment{
     
     memory { 128.GB * task.attempt }
@@ -34,7 +61,7 @@ process cellpose_segment{
     maxRetries 3
 
     publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
-    container = "library://michelebortol/resolve_tools/cellpose_skimage:latest"
+    container = "library://michelebortol/resolve_tools/cellpose_skimage:resolve_tools"
 
     input:
 		val(sample_name)
@@ -57,13 +84,13 @@ process cellpose_segment{
     """
 }
 
-process  extract_sc_data{
+process extract_sc_data{
 
     memory { 16.GB * task.attempt }
     time '72h'
 
     publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
-    container = "library://michelebortol/resolve_tools/cellpose_skimage:latest"
+    container = "library://michelebortol/resolve_tools/cellpose_skimage:resolve_tools"
 
     input:
         val(sample_name)
