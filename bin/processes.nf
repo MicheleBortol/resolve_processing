@@ -35,7 +35,7 @@ process fill_image_gaps{
     maxRetries 3
 
     publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
-    container = "library://michelebortol/resolve_tools/cellpose_skimage:resolve_tools"
+    container = "library://michelebortol/resolve_tools/toolbox:latest"
 
     input:
 		val(sample_name)
@@ -46,7 +46,7 @@ process fill_image_gaps{
 
     script:
     """
-	python3.9 -u /MindaGap/mindagap.py $dapi_path 3 > gapfilling_log.txt
+	python3.8 -u /MindaGap/mindagap.py $dapi_path 3 > gapfilling_log.txt
 	mv *gridfilled.tif $sample_name-gridfilled.tiff
 
     """
@@ -61,7 +61,7 @@ process cellpose_segment{
     maxRetries 3
 
     publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
-    container = "library://michelebortol/resolve_tools/cellpose_skimage:resolve_tools"
+    container = "library://michelebortol/resolve_tools/toolbox:latest"
 
     input:
 		val(sample_name)
@@ -71,11 +71,11 @@ process cellpose_segment{
 		path(dapi_path)
 	
     output:
-        path("$sample_name-mask.tiff", emit: mask_image)
+        path("$sample_name-cellpose-mask.tiff", emit: mask_image)
 
     script:
     """
-	python3.9 -u $script_folder/cellpose_segmenter.py $dapi_path $model_name $probability \
+	python3.8 -u $script_folder/cellpose_segmenter.py $dapi_path $model_name $probability \
 		$diameter $sample_name-cellpose-mask.tiff > $sample_name-segmentation_log.txt
     """
 }
@@ -89,7 +89,7 @@ process mesmer_segment{
     maxRetries 3
 
     publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
-    container = "library://michelebortol/resolve_tools/mesmer:resolve_tools"
+    container = "library://michelebortol/resolve_tools/toolbox:latest"
 
     input:
 		val(sample_name)
@@ -115,7 +115,7 @@ process make_rois{
     maxRetries 3
 
     publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
-    container = "library://michelebortol/resolve_tools/cellpose_skimage:resolve_tools"
+    container = "library://michelebortol/resolve_tools/toolbox:latest"
 
     input:
 		val(sample_name)
@@ -127,7 +127,7 @@ process make_rois{
 	script:
     
 	"""
-	python3.9 -u $script_folder/roi_maker.py $mask_path \
+	python3.8 -u $script_folder/roi_maker.py $mask_path \
 		$sample_name-roi.zip > $sample_name-roi-log.txt
     """
 }
@@ -138,7 +138,7 @@ process extract_sc_data{
     time '72h'
 
     publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
-    container = "library://michelebortol/resolve_tools/cellpose_skimage:resolve_tools"
+    container = "library://michelebortol/resolve_tools/toolbox:latest"
 
     input:
         val(sample_name)
@@ -151,7 +151,7 @@ process extract_sc_data{
     script:
 
     """
-	python3.9 $script_folder/extracter.py $mask_image_path $transcript_coord_path \
+	python3.8 $script_folder/extracter.py $mask_image_path $transcript_coord_path \
 		${sample_name}-cell_data.csv > $sample_name-extraction_log.txt
     """
 }

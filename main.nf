@@ -36,7 +36,7 @@ workflow {
 	if(params.segmentation_tool == "cellpose"){
 		segmentation = cellpose_segmentation(sample_metadata.sample, \
 			params.model_name, params.probability_threshold, \
-			params.cell_diameter, params.do_zip, filledi_images)
+			params.cell_diameter, filled_images)
 	}else if (params.segmentation_tool == "mesmer") {
 		segmentation = mesmer_segmentation(sample_metadata.sample, filled_images)
 	} else {
