@@ -75,10 +75,36 @@ process cellpose_segment{
 
     script:
     """
-	python3.9 -u $script_folder/segmenter.py $dapi_path $model_name $probability \
-		$diameter $sample_name-mask.tiff > $sample_name-segmentation_log.txt
+	python3.9 -u $script_folder/cellpose_segmenter.py $dapi_path $model_name $probability \
+		$diameter $sample_name-cellpose-mask.tiff > $sample_name-segmentation_log.txt
     """
 }
+
+process mesmer_segment{
+    
+    memory { 128.GB * task.attempt }
+    time '72h'
+    
+    errorStrategy { task.exitStatus in 137..143 ? 'retry' : 'terminate' }
+    maxRetries 3
+
+    publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
+    container = "library://michelebortol/resolve_tools/mesmer:resolve_tools"
+
+    input:
+		val(sample_name)
+		path(dapi_path)
+	
+    output:
+        path("$sample_name-mesmer-mask.tiff", emit: mask_image)
+
+    script:
+    """
+	python3.8 -u $script_folder/mesmer_segmenter.py $dapi_path \
+        $sample_name-mesmer-mask.tiff > $sample_name-segmentation_log.txt
+    """
+}
+
 
 process make_rois{
     

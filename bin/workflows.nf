@@ -5,6 +5,7 @@ script_folder = "$baseDir/bin"
 include {collect_data} from "$script_folder/processes.nf"
 include {fill_image_gaps} from "$script_folder/processes.nf"
 include {cellpose_segment} from "$script_folder/processes.nf"
+include {mesmer_segment} from "$script_folder/processes.nf"
 include {make_rois} from "$script_folder/processes.nf"
 include {extract_sc_data} from "$script_folder/processes.nf"
 
@@ -27,7 +28,7 @@ workflow gap_filling{
         gap_filled_image = fill_image_gaps.out.filled_image
 }
 
-workflow segmentation{
+workflow cellpose_segmentation{
     take:
 		sample_name
 		model_name
@@ -39,6 +40,16 @@ workflow segmentation{
 			diameter, dapi_path)
     emit:
         mask_images = cellpose_segment.out.mask_image
+}
+
+workflow mesmer_segmentation{
+    take:
+		sample_name
+		dapi_path
+	main:
+        mesmer_segment(sample_name, dapi_path)
+    emit:
+        mask_images = mesmer_segment.out.mask_image
 }
 
 workflow roi_making{
