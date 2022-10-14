@@ -27,6 +27,8 @@ The definition file is provided [here](https://github.com/MicheleBortol/RESOLVE_
 + (2) [Scripts](##Scripts)
 	+ (2.1) [Gap Filling](###MindaGap)
 	+ (2.2) [Segmentation](###Segmentation)
+		+ (2.2.1) [Cellpose Segmentation](####cellpose)
+		+ (2.2.2) [Mesmer Segmentation](####mesmer)
 	+ (2.3) [ROI Generation](###roi_make)
 	+ (2.4) [Expression assignment](###expression_assign)
 
@@ -39,12 +41,14 @@ For an example see the provided example config [file](https://github.com/Michele
 + `params.input_path` = Path to the resolve folder with the Panoramas to be processed
 + `params.output_path` = Path for output
 
+*Workflow Parameters:*
++ `params.do_zip` =	`true` or `false`.  Set to false to skip making ImageJ ROIs (faster)
++ `params.segmentation_tool` = `"mesmer"` or `"cellpose"` to select which tool to use for segmentation.
+
 *cellpose Segmentation Parameters:*
 + `params.model_name` = "cyto" (recommended) or any model that uses 1 DNA channel.
 + `params.probability_threshold` = floating point number between -6 and +6 see [cellpose threshold documentation](https://cellpose.readthedocs.io/en/latest/settings.html#mask-threshold).
 + `params.cell_diameter` = Cell diameter or `None` for automatic estimation, see [cellpose diameter documentation](https://cellpose.readthedocs.io/en/latest/settings.html#diameter).
-+ `params.do_zip` =	`true` or `false`.  Set to false to skip making ImageJ ROIs (faster)
-+ `params.output_path` = "output/nextflow_test"
 
 ### 1.2) Input <a name="##Input"></a>
 Folder with the panoramas to be processed. All panoramas are expected to have:
@@ -56,7 +60,7 @@ In `params.output_path`:
 + `sample_metadata.csv`: .csv file with one row per sample and 3 columns: sample (sample name), dapi (path to the dapi image), counts (path to the transcript coordinates)
 + For each sample a folder: `SAMPLE_NAME` with: 
 	+ `SAMPLE_NAME-gridfilled.tiff` = Image with the registration grid lines smoothed out. 
-	+ `SAMPLE_NAME-mask.tiff` = 16 bit segmentation mask (0 = background, N = pixels belonging to the Nth cell).
+	+ `SAMPLE_NAME-cellpose-mask.tiff` or `SAMPLE_NAME-memser-mask.tiff` = 16 bit segmentation mask (0 = background, N = pixels belonging to the Nth cell).
 	+ `SAMPLE_NAME-roi.zip` (optional) = ImageJ ROI file with the ROIs numbered according to the segmentation mask.
 	+ `SAMPLE_NAME-cell_data.csv` = Single cell data, numbered according to the semgentation mask.
 
@@ -89,8 +93,9 @@ For more info on MindaGap see:
 https://github.com/ViriatoII/MindaGap
 
 ### 2.2) Segmentation <a name="##Segmentation"></a>
-[Segmentation script](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/bin/segmenter.py)
-Just a wrapper around cellpose. It assumes the input is a single channel grayscale image with the nuclei. It requires the following positional arguments:
+
+#### 2.2.1) Cellpose Segmentation <a name="###cellpose"></a>
+This [Cellpose segmentation script](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/bin/cellpose_segmenter.py) is mostly a wrapper around cellpose. It assumes the input is a single channel grayscale image with the nuclei. It requires the following positional arguments:
 + `tiff_path` = path to the image to segment
 + `model_name` = model to use for the segmentation			
 + `prob_thresh` = probability threshold
@@ -100,10 +105,25 @@ Just a wrapper around cellpose. It assumes the input is a single channel graysca
 The script:
 1) Run CLAHE on the input image.
 2) Segemnt with cellpose.
-3) Remove cells smaller then `cell_diameter / 2`.
+3) Sets to 0 all pixels at the image border.
+4) Remove cells smaller then `cell_diameter / 2` pixels in diameter.
 
 **Example**  
-`python3.9 segmenter.py DAPI_IMAGE cyto 0 70 OUTPUT_SEGMENTATION_MASK_NAME`
+`python3.9 cellpose_segmenter.py DAPI_IMAGE cyto 0 70 OUTPUT_SEGMENTATION_MASK_NAME`
+
+#### 2.2.1) Mesmer Segmentation <a name="###cellpose"></a>
+This [Mesmer segmentation script](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/bin/mesmer_segmenter.py) is mainly a wrapper around mesmer. It assumes the input is a single channel grayscale image with the nuclei. It requires the following positional arguments:
++ `tiff_path` = path to the image to segment
++ `output_mask_file` = path to the cell mask output
+
+The script:
+1) Run CLAHE on the input image.
+2) Segemnt with mesmer.
+3) Sets to 0 all pixels at the image border.
+4) Remove cells smaller then `10` pixels in diameter.
+
+**Example**  
+`python3.8 mesmer_segmenter.py DAPI_IMAGE OUTPUT_SEGMENTATION_MASK_NAME`
 
 ### 2.3) ROI Generation <a name="##roi_make"></a>
 [ROI generation script](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/bin/roi_maker.py)
