@@ -68,19 +68,41 @@ process cellpose_segment{
 		val(model_name)
 		val(probability)
 		val(diameter)
-		val(do_zip)
 		path(dapi_path)
 	
     output:
         path("$sample_name-mask.tiff", emit: mask_image)
-        path("$sample_name-roi.zip", emit: roi_zip, optional: true)
 
     script:
-	  def zip_name = do_zip ? "$sample_name-roi.zip" : ''
     """
 	python3.9 -u $script_folder/segmenter.py $dapi_path $model_name $probability \
-		$diameter $sample_name-mask.tiff $zip_name > $sample_name-segmentation_log.txt
+		$diameter $sample_name-mask.tiff > $sample_name-segmentation_log.txt
+    """
+}
 
+process make_rois{
+    
+    memory { 128.GB * task.attempt }
+    time '72h'
+    
+    errorStrategy { task.exitStatus in 137..143 ? 'retry' : 'terminate' }
+    maxRetries 3
+
+    publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
+    container = "library://michelebortol/resolve_tools/cellpose_skimage:resolve_tools"
+
+    input:
+		val(sample_name)
+		path(mask_path)
+	
+    output:
+        path("$sample_name-roi.zip", emit: roi_zip)
+    
+	script:
+    
+	"""
+	python3.9 -u $script_folder/roi_maker.py $mask_path \
+		$sample_name-roi.zip > $sample_name-roi-log.txt
     """
 }
 

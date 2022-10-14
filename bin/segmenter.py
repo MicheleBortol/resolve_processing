@@ -2,7 +2,6 @@ import argparse
 import numpy as np
 import cv2
 from cellpose import models, io, utils
-from roifile import ImagejRoi, roiwrite
 from skimage import exposure, morphology, segmentation
 
 def claher(img):
@@ -29,13 +28,12 @@ def trim(image):
 def get_arguments():	
 	"""
 	Parses and checks command line arguments, and provides an help text.
-	Assumes 5 and returns 5 positional command line arguments:
+	Assumes 4 and returns 4 positional command line arguments:
 	tiff_path = Path to the tiff file
 	model_name = Model to use for the segmentation
 	prob_thresh = Probability threshold
 	cell_diameter = Expected cell diameter
 	output_mask_file = Path to output the cell mask
-	output_zip = path to the zip file for the ROIs (OPTIONAL)
 	"""
 	parser = argparse.ArgumentParser(description = "Performs 2D segmentation with cellpose.")
 	parser.add_argument("tiff_path", help = "path to the image to segment")
@@ -43,15 +41,13 @@ def get_arguments():
 	parser.add_argument("prob_thresh", help = "probability threshold")
 	parser.add_argument("cell_diameter", help = "expected cell diameter")
 	parser.add_argument("output_mask_file", help = "path to the cell mask output")
-	parser.add_argument("output_zip", nargs = "?", help = "path to the zip file for the ROIs",
-			default = None)
 	args = parser.parse_args()
 	return args.tiff_path, args.model_name, args.prob_thresh, args.cell_diameter, \
-		args.output_mask_file, args.output_zip
+		args.output_mask_file
 
 if __name__ == "__main__":
 		tiff_path, model_name, prob_thresh, cell_diameter, \
-			output_mask_file, output_zip = get_arguments()
+			output_mask_file = get_arguments()
 
 		# Define cellpose model
 		print("Initializing  the model.")
@@ -93,20 +89,3 @@ if __name__ == "__main__":
 		# save mask
 		print("Saving mask.")
 		io.imsave(output_mask_file, mask)
-	
-		# extract outlines and make ROIs
-		if output_zip != None:
-			print("Identifying ROIs.")
-			cell_number = np.amax(mask, axis = None) + 1
-
-			cells = []
-			for cell_id in range(1, cell_number):
-				cell = cv2.findContours((mask == cell_id).astype(np.uint8),
-					cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-				cell = np.concatenate(cell[0][0]).tolist()
-				cells.append(cell)
-
-			print("Saving ROIs.")
-			rois = list(map(ImagejRoi.frompoints, cells))
-			roi_ids = list(map(str, range(0, len(rois))))
-			roiwrite(output_zip, rois, roi_ids, mode = "w")
