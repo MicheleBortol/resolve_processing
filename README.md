@@ -27,7 +27,8 @@ The definition file is provided [here](https://github.com/MicheleBortol/RESOLVE_
 + (2) [Scripts](##Scripts)
 	+ (2.1) [Gap Filling](###MindaGap)
 	+ (2.2) [Segmentation](###Segmentation)
-	+ (2.3) [Expression assignment](###expression_assign)
+	+ (2.3) [ROI Generation](###roi_make)
+	+ (2.4) [Expression assignment](###expression_assign)
 
 ## 1) Nextflow pipeline <a name="##Pipeline"></a>
 
@@ -95,29 +96,44 @@ Just a wrapper around cellpose. It assumes the input is a single channel graysca
 + `prob_thresh` = probability threshold
 + `cell_diameter` = cell diameter for cellpose and size filtering (None for automatic selection). Cells smaller than `cell_diameter / 2` are discarded
 + `output_mask_file` = path to the cell mask output
-+ `output_roi_file` (optional) = path to the roi mask output or leave empty to skip (saves time).
 
 The script:
 1) Run CLAHE on the input image.
 2) Segemnt with cellpose.
 3) Remove cells smaller then `cell_diameter / 2`.
-4) OPTIONAL: extract the ROIs and write them in ImageJ format as a zip file.
-
 
 **Example**  
-`python3.9 segmenter.py DAPI_IMAGE cyto 0 70 OUTPUT_SEGMENTATION_MASK_NAME OUTPUT_ROI_ZIP_NAME`
+`python3.9 segmenter.py DAPI_IMAGE cyto 0 70 OUTPUT_SEGMENTATION_MASK_NAME`
 
-### 2.3) Expression assignment <a name="##expression_assign"></a>
+### 2.3) ROI Generation <a name="##roi_make"></a>
+[ROI generation script](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/bin/roi_maker.py)
+
+Generates a zip file with FiJi ROIs from a segmentation mask.
+
+It requires the following positional arguments:
++ `mask_path` = Path to the segmentation mask.
++ `output_roi_file` = Path to the output zip file with the ROIs.       
+
+The script:
+1) Sets to 0 all pixels at the image boundaires.
+2) Generates an ROI for each cell.
+3) Saves the ROIs in a zip file.
+
+**Example**  
+`python3.9 roi_maker.py MASK_IMAGE OUTPUT_ROI_ZIP_NAME`
+
+### 2.4) Expression assignment <a name="##expression_assign"></a>
 [Expression assignment script](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/bin/segmenter.py)
 Counts the transcripts in each cell from the segmentation mask. Equivalent to the Polylux counts unless:
 + Overlapping ROIs
 + Transcripts outside the border of the image or lying exactly on the ROI border (resolution is 1 pixel)  
 
 It requires the following positional arguments:
-+ mask_file = Path to the input mask file
-+ transcript_file = Path to the input transcript file
-+ output_file = Path to the output single cell data file
-Notes:
++ `mask_file` = Path to the input mask file.
++ `transcript_file` = Path to the input transcript file.
++ `output_file` = Path to the output single cell data file.  
+
+Notes:  
 + Removes all transcripts whose coordinates fall outside the size of the mask.
 
 **Example**  
