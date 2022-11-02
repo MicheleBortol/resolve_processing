@@ -35,7 +35,8 @@ process fill_image_gaps{
     maxRetries 3
 
     publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
-    container = "library://michelebortol/resolve_tools/toolbox:latest"
+    container = { workflow.profile.contains("gpu") ? 
+		"library://michelebortol/resolve_tools/toolbox:gpu" : "library://michelebortol/resolve_tools/toolbox:latest" }
 
     input:
 		val(sample_name)
@@ -47,21 +48,22 @@ process fill_image_gaps{
     script:
     """
 	python3.8 -u /MindaGap/mindagap.py $dapi_path 3 > gapfilling_log.txt
-	mv *gridfilled.tif $sample_name-gridfilled.tiff
+	mv *gridfilled.tif* $sample_name-gridfilled.tiff
 
     """
 }
 
 process cellpose_segment{
     
-    memory { 128.GB * task.attempt }
+    memory { 8.GB * task.attempt }
     time '72h'
     
     errorStrategy { task.exitStatus in 137..143 ? 'retry' : 'terminate' }
-    maxRetries 3
+    maxRetries 4 
 
     publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
-    container = "library://michelebortol/resolve_tools/toolbox:latest"
+    container = { workflow.profile.contains("gpu") ? 
+		"library://michelebortol/resolve_tools/toolbox:gpu" : "library://michelebortol/resolve_tools/toolbox:latest" }
 
     input:
 		val(sample_name)
@@ -82,14 +84,15 @@ process cellpose_segment{
 
 process mesmer_segment{
     
-    memory { 128.GB * task.attempt }
+    memory { 8.GB * task.attempt }
     time '72h'
     
     errorStrategy { task.exitStatus in 137..143 ? 'retry' : 'terminate' }
-    maxRetries 3
+    maxRetries 4
 
     publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
-    container = "library://michelebortol/resolve_tools/toolbox:latest"
+    container = { workflow.profile.contains("gpu") ? 
+		"library://michelebortol/resolve_tools/toolbox:gpu" : "library://michelebortol/resolve_tools/toolbox:latest" }
 
     input:
 		val(sample_name)
@@ -108,14 +111,15 @@ process mesmer_segment{
 
 process make_rois{
     
-    memory { 128.GB * task.attempt }
+    memory { 8.GB * task.attempt }
     time '72h'
     
     errorStrategy { task.exitStatus in 137..143 ? 'retry' : 'terminate' }
-    maxRetries 3
+    maxRetries 4
 
     publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
-    container = "library://michelebortol/resolve_tools/toolbox:latest"
+    container = { workflow.profile.contains("gpu") ? 
+		"library://michelebortol/resolve_tools/toolbox:gpu" : "library://michelebortol/resolve_tools/toolbox:latest" }
 
     input:
 		val(sample_name)
@@ -134,11 +138,12 @@ process make_rois{
 
 process extract_sc_data{
 
-    memory { 16.GB * task.attempt }
+    memory { 8.GB * task.attempt }
     time '72h'
 
     publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
-    container = "library://michelebortol/resolve_tools/toolbox:latest"
+    container = { workflow.profile.contains("gpu") ? 
+		"library://michelebortol/resolve_tools/toolbox:gpu" : "library://michelebortol/resolve_tools/toolbox:latest" }
 
     input:
         val(sample_name)
