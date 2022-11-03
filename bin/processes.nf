@@ -76,9 +76,10 @@ process cellpose_segment{
         path("$sample_name-cellpose-mask.tiff", emit: mask_image)
 
     script:
+	def use_gpu = workflow.profile.contains("gpu") ? "--gpu" : ""
     """
 	python3.8 -u $script_folder/cellpose_segmenter.py $dapi_path $model_name $probability \
-		$diameter $sample_name-cellpose-mask.tiff > $sample_name-segmentation_log.txt
+		$diameter $sample_name-cellpose-mask.tiff $use_gpu > $sample_name-segmentation_log.txt
     """
 }
 

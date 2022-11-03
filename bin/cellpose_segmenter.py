@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 from cellpose import models, io, utils
 from skimage import exposure, morphology, segmentation
+from torch import no_grad
 
 def claher(img):
 	"""
@@ -34,6 +35,7 @@ def get_arguments():
 	prob_thresh = Probability threshold
 	cell_diameter = Expected cell diameter
 	output_mask_file = Path to output the cell mask
+	--gpu = Flag to enable GPU use (optional, defaults to False)
 	"""
 	parser = argparse.ArgumentParser(description = "Performs 2D segmentation with cellpose.")
 	parser.add_argument("tiff_path", help = "path to the image to segment")
@@ -41,18 +43,20 @@ def get_arguments():
 	parser.add_argument("prob_thresh", help = "probability threshold")
 	parser.add_argument("cell_diameter", help = "expected cell diameter")
 	parser.add_argument("output_mask_file", help = "path to the cell mask output")
+	parser.add_argument('--gpu', dest = "use_gpu", default = False, action='store_true', \
+		help = "use the gpu? (default False)")
 	args = parser.parse_args()
 	return args.tiff_path, args.model_name, args.prob_thresh, args.cell_diameter, \
-		args.output_mask_file
+		args.output_mask_file, args.use_gpu
 
 if __name__ == "__main__":
 		tiff_path, model_name, prob_thresh, cell_diameter, \
-			output_mask_file = get_arguments()
+			output_mask_file, use_gpu = get_arguments()
 
 		# Define cellpose model
 		print("Initializing  the model.")
 		
-		model = models.Cellpose(gpu = False, model_type = model_name)
+		model = models.Cellpose(gpu = use_gpu, model_type = model_name)
 
 		channels = [0, 0] # We assume the input is a single grayscale image
 
