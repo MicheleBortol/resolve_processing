@@ -38,7 +38,10 @@ workflow {
 			params.model_name, params.probability_threshold, \
 			params.cell_diameter, filled_images)
 	}else if (params.segmentation_tool == "mesmer") {
-		segmentation = mesmer_segmentation(sample_metadata.sample, filled_images)
+		segmentation = mesmer_segmentation(sample_metadata.sample, filled_images, \
+			params.maxima_threshold, params.maxima_smooth, params.interior_threshold, \
+			params.interior_smooth, params.small_objects_threshold, \
+			params.fill_holes_threshold, params.radius)
 	} else {
 		return
 	}	

@@ -98,6 +98,13 @@ process mesmer_segment{
     input:
 		val(sample_name)
 		path(dapi_path)
+		val(maxima_threshold)          
+		val(maxima_smooth)            
+		val(interior_threshold)      
+		val(interior_smooth)        
+		val(small_objects_threshold)   
+		val(fill_holes_threshold)  
+		val(radius)                    
 	
     output:
         path("$sample_name-mesmer-mask.tiff", emit: mask_image)
@@ -105,7 +112,11 @@ process mesmer_segment{
     script:
     """
 	python3.8 -u $script_folder/mesmer_segmenter.py $dapi_path \
-        $sample_name-mesmer-mask.tiff > $sample_name-segmentation_log.txt
+        $sample_name-mesmer-mask.tiff --maxima_threshold $maxima_threshold\
+		--maxima_smooth $maxima_smooth --interior_threshold $interior_threshold \
+		--interior_smooth $interior_smooth --small_objects_threshold $small_objects_threshold \
+		--fill_holes_threshold $fill_holes_threshold --radius $radius \
+		> $sample_name-segmentation_log.txt
     """
 }
 

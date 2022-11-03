@@ -46,8 +46,17 @@ workflow mesmer_segmentation{
     take:
 		sample_name
 		dapi_path
+		maxima_threshold          
+		maxima_smooth            
+		interior_threshold      
+		interior_smooth        
+		small_objects_threshold   
+		fill_holes_threshold  
+		radius                    
 	main:
-        mesmer_segment(sample_name, dapi_path)
+        mesmer_segment(sample_name, dapi_path, maxima_threshold,
+			maxima_smooth, interior_threshold, interior_smooth,
+			small_objects_threshold, fill_holes_threshold, radius)
     emit:
         mask_images = mesmer_segment.out.mask_image
 }
