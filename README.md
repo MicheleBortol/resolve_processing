@@ -11,12 +11,12 @@ These scripts can be used independently or as part of the Nextflow pipeline prov
 + [Nextflow](https://www.nextflow.io/)
 + [Singularity](https://docs.sylabs.io/guides/latest/user-guide/) 
 
-The pipeline automatically fetches the following singularity container and uses it to run the scripts:
+The pipeline automatically fetches one the following singularity containers and uses it to run the scripts:
++ CPU: https://cloud.sylabs.io/library/michelebortol/resolve_tools/cellpose_skimage:latest
++ GPU: https://cloud.sylabs.io/library/michelebortol/resolve_tools/cellpose_skimage:gpu
 
-https://cloud.sylabs.io/library/michelebortol/resolve_tools/cellpose_skimage
 
-The definition file is provided [here](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/singularity/cellpose.def).
-
+The definition files are provided [here](https://gitlab.hzdr.de/resolve_tools/singularity_container).
 
 ## Contents:
 + (1) [Nextflow pipeline](##Pipeline)
@@ -34,6 +34,14 @@ The definition file is provided [here](https://github.com/MicheleBortol/RESOLVE_
 
 ## 1) Nextflow pipeline <a name="##Pipeline"></a>
 
+The pipeline can be run on the cpu or the gpu. The only affected process is the segmentation process (both cellpose and mesmer).
+
+To run the pipeline in gpu mode add `gpu` to the `-profile` option of `nextflow`.
+
+```
+nextflow run main.f -c run.config -profile=gpu
+```
+
 ### 1.1) Parameters <a name="##Parameters"></a>
 For an example see the provided example config [file](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/example.config)
     
@@ -49,6 +57,15 @@ For an example see the provided example config [file](https://github.com/Michele
 + `params.model_name` = "cyto" (recommended) or any model that uses 1 DNA channel.
 + `params.probability_threshold` = floating point number between -6 and +6 see [cellpose threshold documentation](https://cellpose.readthedocs.io/en/latest/settings.html#mask-threshold).
 + `params.cell_diameter` = Cell diameter or `None` for automatic estimation, see [cellpose diameter documentation](https://cellpose.readthedocs.io/en/latest/settings.html#diameter).
+
+*mesmer Segmentation Parameters:*
++ `params.maxima_threshold`         = Decrease for over segmentation. Default(0.075)
++ `params.maxima_smooth`            = Smoothing radius for maxima. Default(0)
++ `params.interior_threshold`       = Decrease to identify more cells. Default(0.2)
++ `params.interior_smooth`          = Smoothing radius for cell detection. Default(2)
++ `params.small_objects_threshold`  = Minimum object size. Default(15)
++ `params.fill_holes_threshold`     = Max Size for hole filling. Default(15)
++ `params.radius`                   = Undocuented in Mesmer. Default(2)
 
 ### 1.2) Input <a name="##Input"></a>
 Folder with the panoramas to be processed. All panoramas are expected to have:
@@ -102,6 +119,9 @@ This [Cellpose segmentation script](https://github.com/MicheleBortol/RESOLVE_too
 + `cell_diameter` = cell diameter for cellpose and size filtering (None for automatic selection). Cells smaller than `cell_diameter / 2` are discarded
 + `output_mask_file` = path to the cell mask output
 
+It also takes the following optional flag:
++ `--gpu` = Use the first available GPU.
+
 The script:
 1) Run CLAHE on the input image.
 2) Segemnt with cellpose.
@@ -115,6 +135,17 @@ The script:
 This [Mesmer segmentation script](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/bin/mesmer_segmenter.py) is mainly a wrapper around mesmer. It assumes the input is a single channel grayscale image with the nuclei. It requires the following positional arguments:
 + `tiff_path` = path to the image to segment
 + `output_mask_file` = path to the cell mask output
+
+It accepts the following optional parameters:
++ `maxima_threshold`         = Decrease for over segmentation. Default(0.075)
++ `maxima_smooth`            = Smoothing radius for maxima. Default(0)
++ `interior_threshold`       = Decrease to identify more cells. Default(0.2)
++ `interior_smooth`          = Smoothing radius for cell detection. Default(2)
++ `small_objects_threshold`  = Minimum object size. Default(15)
++ `fill_holes_threshold`     = Max Size for hole filling. Default(15)
++ `radius`                   = Undocuented in Mesmer. Default(2)
+
+Mesmer will run on the first available GPU if present, no need to specify additional parameters.
 
 The script:
 1) Run CLAHE on the input image.
