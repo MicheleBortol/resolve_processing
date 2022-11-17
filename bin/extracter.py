@@ -37,10 +37,8 @@ if __name__ == "__main__":
 		header = None, usecols = [0,1,2,3], 
 		names = ["x", "y", "z", "gene"])
 		
-	print(transcripts)
 	transcripts = transcripts.loc[(transcripts.x < w) & (transcripts.y < h)]
 	transcripts = transcripts.groupby(["x", "y", "gene"]).size().reset_index(name="freq")
-	print(transcripts)
 
 	genes = transcripts.gene
 	geneset = sorted(list(set(genes))) # Sorted is not necessary
