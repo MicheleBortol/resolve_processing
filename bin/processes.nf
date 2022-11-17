@@ -104,13 +104,13 @@ process cellpose_segment{
 		path(dapi_path)
 	
     output:
-        path("$sample_name-cellpose-mask.tiff", emit: mask_image)
+        path("$sample_name-cellpose_mask.tiff", emit: mask_image)
 
     script:
 	def use_gpu = workflow.profile.contains("gpu") ? "--gpu" : ""
     """
 	python3.8 -u $script_folder/cellpose_segmenter.py $dapi_path $model_name $probability \
-		$diameter $sample_name-cellpose-mask.tiff $use_gpu > $sample_name-segmentation_log.txt 2>&1
+		$diameter $sample_name-cellpose_mask.tiff $use_gpu > $sample_name-segmentation_log.txt 2>&1
     """
 }
 
@@ -138,12 +138,12 @@ process mesmer_segment{
 		val(radius)                    
 	
     output:
-        path("$sample_name-mesmer-mask.tiff", emit: mask_image)
+        path("$sample_name-mesmer_mask.tiff", emit: mask_image)
 
     script:
     """
 	python3.8 -u $script_folder/mesmer_segmenter.py $dapi_path \
-        $sample_name-mesmer-mask.tiff --maxima_threshold $maxima_threshold\
+        $sample_name-mesmer_mask.tiff --maxima_threshold $maxima_threshold\
 		--maxima_smooth $maxima_smooth --interior_threshold $interior_threshold \
 		--interior_smooth $interior_smooth --small_objects_threshold $small_objects_threshold \
 		--fill_holes_threshold $fill_holes_threshold --radius $radius \
