@@ -4,6 +4,7 @@ script_folder = "$baseDir/bin"
 
 include {collect_data} from "$script_folder/processes.nf"
 include {fill_image_gaps} from "$script_folder/processes.nf"
+include {deduplicate} from "$script_folder/processes.nf"
 include {cellpose_segment} from "$script_folder/processes.nf"
 include {mesmer_segment} from "$script_folder/processes.nf"
 include {make_rois} from "$script_folder/processes.nf"
@@ -26,6 +27,21 @@ workflow gap_filling{
         fill_image_gaps(sample_name, dapi_path)
     emit:
         gap_filled_image = fill_image_gaps.out.filled_image
+}
+
+workflow deduplicating{
+    take:
+		sample_name
+	    transcript_path
+        tile_size
+        window_size
+        max_freq
+        min_mode
+    main:
+        deduplicate(sample_name, transcript_path, tile_size, window_size,
+            max_freq, min_mode)
+    emit:
+        deduplicated_transcripts = deduplicate.out.filtered_transcripts
 }
 
 workflow cellpose_segmentation{

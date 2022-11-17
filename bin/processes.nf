@@ -48,7 +48,38 @@ process fill_image_gaps{
     script:
     """
 	python3.8 -u /MindaGap/mindagap.py $dapi_path 3 > gapfilling_log.txt
-	mv *gridfilled.tif* $sample_name-gridfilled.tiff
+	mv *gridfilled.tif* $sample_name-gridfilled.tiff 2>&1
+
+    """
+}
+
+process deduplicate{
+
+    memory { 8.GB * task.attempt }
+    time '1h'
+
+    errorStrategy { task.exitStatus in 137..143 ? 'retry' : 'terminate' }
+    maxRetries 3
+
+    publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
+    container = "library://michelebortol/resolve_tools/toolbox:latest"
+
+    input:
+		val(sample_name)
+		path(transcript_path)
+        val(tile_size)
+        val(window_size)
+        val(max_freq)
+        val(min_mode)
+	
+    output:
+        path("$sample_name-filtered_transcripts.txt", emit: filtered_transcripts)
+
+    script:
+    """
+	python3.8 -u /MindaGap/duplicate_finder.py $transcript_path $tile_size $window_size \
+      $max_freq $min_mode > deduplication_log.txt
+	mv *_markedDups.txt $sample_name-filtered_transcripts.txt 2>&1
 
     """
 }
@@ -79,7 +110,7 @@ process cellpose_segment{
 	def use_gpu = workflow.profile.contains("gpu") ? "--gpu" : ""
     """
 	python3.8 -u $script_folder/cellpose_segmenter.py $dapi_path $model_name $probability \
-		$diameter $sample_name-cellpose-mask.tiff $use_gpu > $sample_name-segmentation_log.txt
+		$diameter $sample_name-cellpose-mask.tiff $use_gpu > $sample_name-segmentation_log.txt 2>&1
     """
 }
 
@@ -116,7 +147,7 @@ process mesmer_segment{
 		--maxima_smooth $maxima_smooth --interior_threshold $interior_threshold \
 		--interior_smooth $interior_smooth --small_objects_threshold $small_objects_threshold \
 		--fill_holes_threshold $fill_holes_threshold --radius $radius \
-		> $sample_name-segmentation_log.txt
+		> $sample_name-segmentation_log.txt 2>&1
     """
 }
 
@@ -144,7 +175,7 @@ process make_rois{
     
 	"""
 	python3.8 -u $script_folder/roi_maker.py $mask_path \
-		$sample_name-roi.zip > $sample_name-roi-log.txt
+		$sample_name-roi.zip > $sample_name-roi-log.txt 2>&1
     """
 }
 
@@ -169,7 +200,7 @@ process extract_sc_data{
 
     """
 	python3.8 $script_folder/extracter.py $mask_image_path $transcript_coord_path \
-		${sample_name}-cell_data.csv > $sample_name-extraction_log.txt
+		${sample_name}-cell_data.csv > $sample_name-extraction_log.txt 2>&1
     """
 }
 

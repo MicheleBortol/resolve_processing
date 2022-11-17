@@ -34,14 +34,17 @@ if __name__ == "__main__":
 
 	print("Processing Transcripts")
 	transcripts = pd.read_csv(transcript_file_name, sep = "\t", 
-		header = None, usecols = [0,1,2,3,4], 
-		names = ["x", "y", "z", "gene", "qual"])
+		header = None, usecols = [0,1,2,3], 
+		names = ["x", "y", "z", "gene"])
 		
+	print(transcripts)
 	transcripts = transcripts.loc[(transcripts.x < w) & (transcripts.y < h)]
 	transcripts = transcripts.groupby(["x", "y", "gene"]).size().reset_index(name="freq")
+	print(transcripts)
 
 	genes = transcripts.gene
 	geneset = sorted(list(set(genes))) # Sorted is not necessary
+	print(geneset)
 
 	print("Measuring cell area and position")
 

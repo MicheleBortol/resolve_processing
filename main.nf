@@ -4,6 +4,7 @@ script_folder = "$baseDir/bin"
 
 include {data_collection} from "$script_folder/workflows.nf"
 include {gap_filling} from "$script_folder/workflows.nf"
+include {deduplicating} from "$script_folder/workflows.nf"
 include {cellpose_segmentation} from "$script_folder/workflows.nf"
 include {mesmer_segmentation} from "$script_folder/workflows.nf"
 include {roi_making} from "$script_folder/workflows.nf"
@@ -32,6 +33,13 @@ workflow {
 	filled_images = gap_filling.out.gap_filled_image
 		.toSortedList(compare_file_names).flatten().view()
 
+    // Deduplicate transcripts with MindaGap
+	deduplicating(samples, counts, params.tile_size, params.window_size, \
+        params.max_freq, params.min_mode)
+
+	clean_transcripts = deduplicating.out.deduplicated_transcripts
+		.toSortedList(compare_file_names).flatten().view()
+
 	// Cell Segmentation
 	if(params.segmentation_tool == "cellpose"){
 		segmentation = cellpose_segmentation(sample_metadata.sample, \
@@ -56,7 +64,7 @@ workflow {
 	}    
 
     // Single Cell Data Extraction
-	sc_data_extraction(samples, cell_masks, counts)
+	sc_data_extraction(samples, cell_masks, clean_transcripts)
     single_cell_data = sc_data_extraction.out.sc_data
                 .toSortedList(compare_file_names).flatten().view()
 }
