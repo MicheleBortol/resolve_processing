@@ -28,25 +28,31 @@ workflow {
 	counts = sample_metadata.counts.toSortedList().flatten().view()
 
 	// Gap Filling with MindaGap
-	gap_filling(samples, dapi)
-
-	filled_images = gap_filling.out.gap_filled_image
-		.toSortedList(compare_file_names).flatten().view()
+    if (params.fill_gaps == true){
+	    gap_filling(samples, dapi)
+	    images = gap_filling.out.gap_filled_image
+		    .toSortedList(compare_file_names).flatten().view()
+    } else {
+        images = dapi
+    }
 
     // Deduplicate transcripts with MindaGap
-	deduplicating(samples, counts, params.tile_size, params.window_size, \
-        params.max_freq, params.min_mode)
-
-	clean_transcripts = deduplicating.out.deduplicated_transcripts
-		.toSortedList(compare_file_names).flatten().view()
+	if (params.deduplicate == true){
+        deduplicating(samples, counts, params.tile_size, params.window_size, \
+            params.max_freq, params.min_mode)
+	    transcripts = deduplicating.out.deduplicated_transcripts
+		    .toSortedList(compare_file_names).flatten().view()
+    } else {
+        transcripts = counts
+    }
 
 	// Cell Segmentation
 	if(params.segmentation_tool == "cellpose"){
 		segmentation = cellpose_segmentation(sample_metadata.sample, \
 			params.model_name, params.probability_threshold, \
-			params.cell_diameter, filled_images)
+			params.cell_diameter, images)
 	}else if (params.segmentation_tool == "mesmer") {
-		segmentation = mesmer_segmentation(sample_metadata.sample, filled_images, \
+		segmentation = mesmer_segmentation(sample_metadata.sample, images, \
 			params.maxima_threshold, params.maxima_smooth, params.interior_threshold, \
 			params.interior_smooth, params.small_objects_threshold, \
 			params.fill_holes_threshold, params.radius)
@@ -64,7 +70,7 @@ workflow {
 	}    
 
     // Single Cell Data Extraction
-	sc_data_extraction(samples, cell_masks, clean_transcripts)
+	sc_data_extraction(samples, cell_masks, transcripts)
     single_cell_data = sc_data_extraction.out.sc_data
                 .toSortedList(compare_file_names).flatten().view()
 }
