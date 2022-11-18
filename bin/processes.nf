@@ -62,7 +62,8 @@ process deduplicate{
     maxRetries 3
 
     publishDir "$params.output_path/$sample_name", mode:'copy', overwrite: true
-    container = "library://michelebortol/resolve_tools/toolbox:latest"
+    container = { workflow.profile.contains("gpu") ? 
+		"library://michelebortol/resolve_tools/toolbox:gpu" : "library://michelebortol/resolve_tools/toolbox:latest" }
 
     input:
 		val(sample_name)
