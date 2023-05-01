@@ -8,6 +8,7 @@ include {deduplicate} from "$script_folder/processes.nf"
 include {cellpose_segment} from "$script_folder/processes.nf"
 include {mesmer_segment} from "$script_folder/processes.nf"
 include {make_rois} from "$script_folder/processes.nf"
+include {clean_cell_mask} from "$script_folder/processes.nf"
 include {extract_sc_data} from "$script_folder/processes.nf"
 
 workflow data_collection{
@@ -33,13 +34,14 @@ workflow deduplicating{
     take:
 		sample_name
 	    transcript_path
-        tile_size
+        tile_size_x
+        tile_size_y
         window_size
         max_freq
         min_mode
     main:
-        deduplicate(sample_name, transcript_path, tile_size, window_size,
-            max_freq, min_mode)
+        deduplicate(sample_name, transcript_path, tile_size_x, tile_size_y,
+            window_size, max_freq, min_mode)
     emit:
         deduplicated_transcripts = deduplicate.out.filtered_transcripts
 }
@@ -54,8 +56,9 @@ workflow cellpose_segmentation{
 	main:
         cellpose_segment(sample_name, model_name, probability,
 			diameter, dapi_path)
+        clean_cell_mask(sample_name, diameter, cellpose_segment.out.mask_image)
     emit:
-        mask_images = cellpose_segment.out.mask_image
+        mask_images = clean_cell_mask.out.cleaned_cell_mask
 }
 
 workflow mesmer_segmentation{
@@ -73,8 +76,9 @@ workflow mesmer_segmentation{
         mesmer_segment(sample_name, dapi_path, maxima_threshold,
 			maxima_smooth, interior_threshold, interior_smooth,
 			small_objects_threshold, fill_holes_threshold, radius)
+        clean_cell_mask(sample_name, mesmer_segment.out.mask_image)
     emit:
-        mask_images = mesmer_segment.out.mask_image
+        mask_images = clean_cell_mask.out.cleaned_cell_mask
 }
 
 workflow roi_making{

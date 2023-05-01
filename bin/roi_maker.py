@@ -47,4 +47,4 @@ if __name__ == "__main__":
 	print("Saving ROIs.")
 	rois = list(map(ImagejRoi.frompoints, cells))
 	roi_ids = list(map(str, range(0, len(rois))))
-	roiwrite(output_roi_file, rois, roi_ids, mode = "w")
+	roiwrite(output_roi_file, rois, name = roi_ids, mode = "w")

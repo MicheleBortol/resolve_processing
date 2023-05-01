@@ -38,8 +38,8 @@ workflow {
 
     // Deduplicate transcripts with MindaGap
 	if (params.deduplicate == true){
-        deduplicating(samples, counts, params.tile_size, params.window_size, \
-            params.max_freq, params.min_mode)
+        deduplicating(samples, counts, params.tile_size_x, params.tile_size_y, \
+            params.window_size, params.max_freq, params.min_mode) 
 	    transcripts = deduplicating.out.deduplicated_transcripts
 		    .toSortedList(compare_file_names).flatten().view()
     } else {

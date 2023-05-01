@@ -81,15 +81,6 @@ if __name__ == "__main__":
 		mask, flows, style, diameter = model.eval(img, diameter = cell_diameter,
 				channels = channels) # recover diameter if it was set to None earlier
 
-		# Remove isolated pixels and too small cells
-		print("Cleaning the segmentation mask.")
-		trim(mask)
-		cell_number = np.amax(mask, axis = None) + 1
-		canvas = np.zeros_like(mask)
-		for cell_id in range(1, cell_number):
-			canvas[np.where(morphology.remove_small_objects(mask == cell_id, diameter / 2) != 0)] = cell_id
-		mask, _, _ = segmentation.relabel_sequential(canvas, offset = 1)
-
 		# save mask
 		print("Saving mask.")
 		io.imsave(output_mask_file, mask)
