@@ -5,6 +5,8 @@ Tentative set of tools and scripts for analysing spatial transcriptomic data wit
 + Filling in gaps left by tile registration.
 + Deduplicating transcripts.
 + Segmentation.
++ Cleaning up the segmentation mask (removing too small cells)
++ Making ImageJ and Seurat compatible ROIs
 + Expression assignment = counting the transcripts in each cell.
 
 These scripts can be used independently or as part of the Nextflow pipeline provided.
@@ -13,8 +15,7 @@ These scripts can be used independently or as part of the Nextflow pipeline prov
 + [Nextflow](https://www.nextflow.io/)
 + [Singularity](https://docs.sylabs.io/guides/latest/user-guide/) 
 
-The pipeline automatically fetches one the following singularity containers and uses it to run the scripts:
-+ CPU: https://cloud.sylabs.io/library/michelebortol/resolve_tools/cellpose_skimage:latest
+The pipeline automatically fetches this singularity container
 + GPU: https://cloud.sylabs.io/library/michelebortol/resolve_tools/cellpose_skimage:gpu
 
 
@@ -31,7 +32,8 @@ The definition files are provided [here](https://gitlab.hzdr.de/resolve_tools/si
 	+ (2.2) [Deduplication](###Deduplication)
 	+ (2.3) [Segmentation](###Segmentation)
 		+ (2.3.1) [Cellpose Segmentation](####cellpose)
-		+ (2.4.2) [Mesmer Segmentation](####mesmer)
+		+ (2.3.2) [Mesmer Segmentation](####mesmer)
+	+ (2.4) [Segmentation Mask Cleanup](###mask_cleanup)
 	+ (2.5) [ROI Generation](###roi_make)
 	+ (2.6) [Expression assignment](###expression_assign)
 
@@ -131,7 +133,8 @@ mv *_markedDups.txt $sample_name-filtered_transcripts.txt 2>&1
 
 It requires the following arguments:
 + `$transcript_path`  = path to the transcripts to deduplicate
-+ `$tile_size`        = Tile size (distance between gridlines). Default (2144).
++ `$tile_size_x`        = X tile size (distance between gridlines). Default (2144).
++ `$tile_size_y`        = Y tile size (distance between gridlines). Default (2144).
 + `$window_size`      = Window arround gridlines to search for duplicates. Default (30)
 + `$max_freq`         = Maximum transcript count to calculate X/Y shifts (better to discard very common genes). Default (400)
 + `$min_mode`         = Minumum occurances of ~XYZ_shift to consider it valid. Default(10)  
@@ -151,7 +154,7 @@ This [Cellpose segmentation script](https://github.com/MicheleBortol/RESOLVE_too
 + `tiff_path` = path to the image to segment
 + `model_name` = model to use for the segmentation			
 + `prob_thresh` = probability threshold
-+ `cell_diameter` = cell diameter for cellpose and size filtering (None for automatic selection). Cells smaller than `cell_diameter / 2` are discarded
++ `cell_diameter` = cell diameter for cellpose.
 + `output_mask_file` = path to the cell mask output
 
 It also takes the following optional flag:
@@ -161,7 +164,6 @@ The script:
 1) Run CLAHE on the input image.
 2) Segemnt with cellpose.
 3) Sets to 0 all pixels at the image border.
-4) Remove cells smaller then `cell_diameter / 2` pixels in diameter.
 
 **Example**  
 `python3.9 cellpose_segmenter.py DAPI_IMAGE cyto 0 70 OUTPUT_SEGMENTATION_MASK_NAME`
@@ -186,12 +188,29 @@ The script:
 1) Run CLAHE on the input image.
 2) Segemnt with mesmer.
 3) Sets to 0 all pixels at the image border.
-4) Remove cells smaller then `10` pixels in diameter.
+
 
 **Example**  
 `python3.8 mesmer_segmenter.py DAPI_IMAGE OUTPUT_SEGMENTATION_MASK_NAME`
 
-### 2.4) ROI Generation <a name="##roi_make"></a>
+### 2.4 Segmentation Mask Cleanup  <a name="##mask_cleanup"></a>
+[Segmentation mask cleanup script](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/bin/image_cleaner.py)
+
+It requires the following positional arguments:
++ `mask_path` = path to the image to segment
++ `diameter` = cell diameter size filtering. Cells smaller than `cell_diameter / 2` are discarded
++ `output_mask_file` = path to the cell mask output
+
+The script prepares the cell mask for:
++ ROI generation
++ Expression assignment
+
+The script:
+1) Sets to 0 all pixels at the image border.
+2) Remove cells smaller then `cell_diameter / 2` pixels in diameter.
+
+
+### 2.5) ROI Generation <a name="##roi_make"></a>
 [ROI generation script](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/bin/roi_maker.py)
 
 Generates a zip file with FiJi ROIs from a segmentation mask.
@@ -208,7 +227,7 @@ The script:
 **Example**  
 `python3.9 roi_maker.py MASK_IMAGE OUTPUT_ROI_ZIP_NAME`
 
-### 2.5) Expression assignment <a name="##expression_assign"></a>
+### 2.6) Expression assignment <a name="##expression_assign"></a>
 [Expression assignment script](https://github.com/MicheleBortol/RESOLVE_tools/blob/main/bin/segmenter.py)
 Counts the transcripts in each cell from the segmentation mask. Equivalent to the Polylux counts unless:
 + Overlapping ROIs
