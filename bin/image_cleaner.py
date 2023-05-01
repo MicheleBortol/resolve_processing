@@ -16,7 +16,7 @@ def trim(image):
 def get_arguments():	
 	"""
 	Parses and checks command line arguments, and provides an help text.
-	Assumes 2 and returns 2 positional command line arguments:
+	Assumes 3 and returns 3 positional command line arguments:
 	mask_path = Path to the segmentation mask
 	output_mask_file = Path to the output cleaned mask for ROI extraction.
 	"""
